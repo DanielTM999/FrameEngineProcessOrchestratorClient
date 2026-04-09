@@ -1,0 +1,49 @@
+{
+  "pluginCollectionId": "ProcessOrchestratorClient",
+  "pluginCollectionName": "Process Orchestrator Client",
+  "pluginCollectionVersion": "1.0.0",
+  "pluginCollectionDescription": "Cliente para o FrameEngine que permite conectar e interagir com o Process Orchestrator, possibilitando o gerenciamento de processos locais e remotos diretamente dentro da aplicação.",
+  "pluginCollectionAuthor": "Daniel Melo",
+  "pluginCollectionAuthorEmail": "danielmelo101203@gmail.com",
+  "pluginWebsite": "https://github.com/danielmelo/frameengine-process-orchestrator-client",
+  "pluginLicense": "MIT",
+  "pluginMinimumAppVersion": "1.0.0",
+  "plugins": [
+    {
+      "id": "ProcessOrchestratorClientPluginLaunch",
+      "name": "Process Orchestrator Client Launcher",
+      "description": "Plugin responsável por iniciar e configurar o cliente do Process Orchestrator, estabelecendo a conexão com o servidor e carregando a interface de gerenciamento de processos.",
+      "version": "1.0.0",
+      "website": "https://github.com/danielmelo/frameengine-process-orchestrator-client"
+    }
+  ],
+  "services": [
+    {
+      "id": "RemoteConnectionManagerService",
+      "name": "Remote Connection Manager Service",
+      "description": "Serviço responsável por gerenciar conexões remotas com o Process Orchestrator, mantendo o estado da conexão e expondo uma API para os plugins interagirem com servidores remotos.",
+      "version": "1.0.0",
+      "website": "https://github.com/danielmelo/frameengine-process-orchestrator-client",
+      "shared": false,
+      "dependencies": []
+    },
+    {
+      "id": "RemoteAuthenticationServerServices",
+      "name": "Remote Authentication Server Services",
+      "description": "Serviço responsável por gerenciar a autenticação com servidores remotos do Process Orchestrator, executando o fluxo de autenticação para conexões configuradas.",
+      "version": "1.0.0",
+      "website": "https://github.com/danielmelo/frameengine-process-orchestrator-client",
+      "shared": false,
+      "dependencies": []
+    },
+    {
+      "id": "ProcessServerServices",
+      "name": "Process Server Services",
+      "description": "Serviço responsável por comunicar-se com o servidor remoto do Process Orchestrator, recuperando e gerenciando os processos disponíveis no ambiente remoto.",
+      "version": "1.0.0",
+      "website": "https://github.com/danielmelo/frameengine-process-orchestrator-client",
+      "shared": false,
+      "dependencies": []
+    }
+  ]
+}
