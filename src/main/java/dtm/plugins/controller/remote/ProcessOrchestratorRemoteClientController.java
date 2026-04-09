@@ -1,5 +1,7 @@
 package dtm.plugins.controller.remote;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import dtm.apps.core.ApplicationProperties;
 import dtm.apps.core.WindowFactory;
 import dtm.apps.core.extension.PluginContext;
@@ -20,6 +22,7 @@ import dtm.plugins.context.RemoteProcessContext;
 import dtm.plugins.exceptions.DisconnectedException;
 import dtm.plugins.models.Constants;
 import dtm.plugins.models.ProcessNodeModel;
+import dtm.plugins.models.UserNotificationContent;
 import dtm.plugins.models.enums.ProcessPhase;
 import dtm.plugins.models.remote.ProcessRemoteServer;
 import dtm.plugins.models.remote.ProcessRemoteServerState;
@@ -35,6 +38,7 @@ import dtm.plugins.views.components.pipeline.ProcessPipelineView;
 import dtm.plugins.views.components.pipeline.ProcessSidebarItem;
 import dtm.plugins.views.components.terminal.TerminalViewPanel;
 import dtm.plugins.views.notification.ServerStatusNotification;
+import dtm.plugins.views.notification.UserNotification;
 import dtm.plugins.views.remote.ProcessOrchestratorRemoteClientView;
 import dtm.request_actions.http.simple.core.HttpAction;
 import dtm.stools.component.events.EventType;
@@ -254,10 +258,16 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
         try{
             switch (event) {
                 case "PROCESS-METADATA" -> {
+                    processMetadata(ctx, content);
                     break;
                 }
                 case "PROCESS-OUTPUT" -> {
                     ctx.appendOutputLine(content);
+                    break;
+                }
+                case "USER-NOTIFY" -> {
+                    processEventUserNotification(content);
+                    break;
                 }
                 default -> {
                     return;
@@ -431,6 +441,24 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
 
 
 
+    private void processEventUserNotification(String content) throws Exception{
+        try{
+            UserNotificationContent userNotificationContent = Constants.OBJECT_MAPPER.readValue(content, UserNotificationContent.class);
+            NotificationManager.startNotification(new UserNotification(userNotificationContent.getTitle(), userNotificationContent.getContent(), this::onNotificationClick), 30, TimeUnit.SECONDS);
+        }catch (Exception ignored){}
+    }
+
+    @SuppressWarnings("unchecked")
+    private void processMetadata(RemoteProcessContext ctx, String content) throws JsonProcessingException {
+        var metadataMap = Constants.OBJECT_MAPPER.readValue(content, Map.class);
+        StringBuilder formattedLog = new StringBuilder();
+        formattedLog.append("--- Process Metadata ---").append(System.lineSeparator());
+        metadataMap.forEach((key, value) -> {
+            formattedLog.append("[").append(key).append("]: ").append(value).append(System.lineSeparator());
+        });
+        ctx.appendOutputLine(formattedLog.toString());
+    }
+
 
     private Collection<ProcessRemoteServer> getProcessesFromServer(){
         return getProcessServerServices().getAllProcesses();
@@ -480,8 +508,7 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
     }
 
     private void updateContextState(RemoteProcessContext ctx, ProcessRemoteServerState processRemoteServerState) {
-        ProcessSidebarItem sidebarItem = ctx.getProcessSidebar();
-        invokeLater(() -> sidebarItem.setRunning(processRemoteServerState.isRunning()));
+        invokeLater(() -> ctx.setRunning(processRemoteServerState.isRunning()));
     }
 
     private ProcessServerServices getProcessServerServices(){
@@ -527,6 +554,15 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
                 JMenuItem btnMonitor = new JMenuItem("Monitorar (Abrir Terminal)");
                 btnMonitor.addActionListener(evt -> {
                     showTerminalMonitor(ctx);
+                    int option = ModernDialog.builder()
+                            .type(ModernDialog.Type.INFO)
+                            .accentColor(new Color(59, 130, 246))
+                            .title("Histórico de Logs")
+                            .message("Deseja recuperar as saídas (logs) anteriores deste processo?")
+                            .option("Sim", 0)
+                            .option("Não", 1, new Color(220, 53, 69), Color.WHITE)
+                            .show();
+                    attachRunningProcess(ctx, option == 0);
                 });
                 menu.add(btnMonitor);
             }
@@ -821,4 +857,18 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
         if(processAttachListenerService != null) processAttachListenerService.interrupt();
         processAttachListenerServiceRef.set(null);
     }
+
+    private void onNotificationClick(){
+        if(mainFrameWindow != null && mainFrameWindow.isDisplayable()){
+            mainFrameWindow.runOnUi((w) -> {
+                mainFrameWindow.setVisible(true);
+                mainFrameWindow.setAlwaysOnTop(true);
+                mainFrameWindow.setExtendedState(JFrame.MAXIMIZED_BOTH);
+                mainFrameWindow.toFront();
+                mainFrameWindow.requestFocus();
+                mainFrameWindow.setAlwaysOnTop(false);
+            });
+        }
+    }
+
 }

@@ -21,15 +21,18 @@ import dtm.plugins.context.LockContext;
 import dtm.plugins.models.Constants;
 import dtm.plugins.models.ProcessNodeModel;
 import dtm.plugins.context.LocalProcessContext;
+import dtm.plugins.models.UserNotificationContent;
 import dtm.plugins.models.enums.ProcessPhase;
 import dtm.plugins.views.components.form.ProcessNodeFormView;
 import dtm.plugins.views.components.terminal.TerminalViewPanel;
 import dtm.plugins.views.local.ProcessOrchestratorLocalClientView;
 import dtm.plugins.views.components.pipeline.ProcessPipelineView;
 import dtm.plugins.views.components.pipeline.ProcessSidebarItem;
+import dtm.plugins.views.notification.UserNotification;
 import dtm.stools.component.events.EventType;
 import dtm.stools.component.panels.BlockingPanel;
 import dtm.stools.component.popup.ModernDialog;
+import dtm.stools.context.NotificationManager;
 import dtm.stools.controllers.component.BindingAbstractViewController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +48,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -686,7 +690,11 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
     }
 
     private void onProcessUserNotifyListener(ProcessOutputEvent event){
-
+        try{
+            String content = event.getProcessOutput();
+            UserNotificationContent userNotificationContent = Constants.OBJECT_MAPPER.readValue(content, UserNotificationContent.class);
+            NotificationManager.startNotification(new UserNotification(userNotificationContent.getTitle(), userNotificationContent.getContent(), this::onNotificationClick), 30, TimeUnit.SECONDS);
+        }catch (Exception ignored){}
     }
 
     private void onProcessErrorListener(ProcessDefinition processDefinition, Throwable error){
@@ -699,6 +707,19 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
                 error.printStackTrace(pw);
                 String stackTrace = sw.toString();
                 ctx.appendOutputLine("[ERROR] "+stackTrace);
+            });
+        }
+    }
+
+    private void onNotificationClick(){
+        if(mainFrameWindow != null && mainFrameWindow.isDisplayable()){
+            mainFrameWindow.runOnUi((w) -> {
+                mainFrameWindow.setVisible(true);
+                mainFrameWindow.setAlwaysOnTop(true);
+                mainFrameWindow.setExtendedState(JFrame.MAXIMIZED_BOTH);
+                mainFrameWindow.toFront();
+                mainFrameWindow.requestFocus();
+                mainFrameWindow.setAlwaysOnTop(false);
             });
         }
     }

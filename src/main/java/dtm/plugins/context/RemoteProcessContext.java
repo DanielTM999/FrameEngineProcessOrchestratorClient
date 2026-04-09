@@ -55,6 +55,14 @@ public class RemoteProcessContext extends BaseTerminalOutputContext {
         processSidebar.setMonitoring(isMonitoring);
     }
 
+    public void setRunningNoDisplay(boolean isRunning) {
+        this.isRunningRef.set(isRunning);
+    }
+
+    public void setMonitoringNoDisplay(boolean isMonitoring) {
+        this.isMonitoringRef.set(isMonitoring);
+    }
+
     public boolean isRunning() {
         return isRunningRef.get();
     }
