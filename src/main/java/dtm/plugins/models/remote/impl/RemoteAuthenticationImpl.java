@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import dtm.plugins.models.remote.RemoteAuthentication;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 
@@ -12,14 +14,16 @@ import java.time.format.DateTimeParseException;
 @Slf4j
 public class RemoteAuthenticationImpl implements RemoteAuthentication {
     private boolean authenticated;
-
     private String token;
 
-    @JsonProperty("expirationDateTime")
+    @JsonProperty("expirationInstantTimZone")
     private String expirationDateRaw;
 
+    @JsonProperty("expirationInstant")
+    private String expirationInstantRaw;
+
     @JsonIgnore
-    private LocalDateTime cachedExpirationDateTime;
+    private Instant cachedExpiration;
 
     @JsonIgnore
     private String baseUrl;
@@ -27,27 +31,23 @@ public class RemoteAuthenticationImpl implements RemoteAuthentication {
 
     @Override
     public boolean isAuthenticated() {
-        LocalDateTime expiration = getExpirationDateTime();
-
-        if (!authenticated || expiration == null) {
-            return false;
-        }
-
-        return LocalDateTime.now().isBefore(expiration);
+        Instant expiration = getExpirationDateTime();
+        if (!authenticated || expiration == null) return false;
+        return Instant.now().isBefore(expiration);
     }
 
     @Override
     @JsonIgnore
-    public LocalDateTime getExpirationDateTime() {
-        if (cachedExpirationDateTime == null && expirationDateRaw != null && !expirationDateRaw.isBlank()) {
+    public Instant getExpirationDateTime() {
+        if (cachedExpiration == null && expirationInstantRaw != null && !expirationInstantRaw.isBlank()) {
             try {
-                cachedExpirationDateTime = LocalDateTime.parse(expirationDateRaw);
+                cachedExpiration = Instant.parse(expirationInstantRaw);
             } catch (DateTimeParseException e) {
-                log.error("Erro ao converter data de expiração: {}", expirationDateRaw, e);
+                log.error("Erro ao converter expirationInstant: {}", expirationInstantRaw, e);
                 return null;
             }
         }
-        return cachedExpirationDateTime;
+        return cachedExpiration;
     }
 
     @Override

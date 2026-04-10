@@ -52,15 +52,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -81,8 +81,16 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
     private final AtomicReference<ProcessServerServices> processServerServicesRef = new AtomicReference<>();
     private final AtomicReference<RemoteAuthentication> remoteAuthenticationAtomicReference = new AtomicReference<>();
     private final AtomicReference<ProcessAttachListenerService> processAttachListenerServiceRef = new AtomicReference<>();
+    private final AtomicReference<ScheduledFuture<?>> sessionTimerFuture = new AtomicReference<>();
+
 
     private final ExecutorService virtualExecutor = Executors.newVirtualThreadPerTaskExecutor();
+    private final ScheduledExecutorService sessionTimeSchedule = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "Session-Time-Worker");
+        t.setDaemon(true);
+        return t;
+    });
+
     private final Map<String, ProcessAttachListenerService> processAttachMap = new ConcurrentHashMap<>();
     private final Map<String, RemoteProcessContext> contextMap = new ConcurrentHashMap<>();
 
@@ -143,10 +151,11 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
         if(remoteAuthenticationAtomicReference.compareAndSet(null, pluginContext.getMemory(LockContext.INSTANCE).get(Constants.PROCESS_ORCHESTRATOR_REMOTE_KEY))){
             loadProcessAsync();
             attachGlobalProcessListener();
+            startSessionTimer();
         }else{
-            RemoteAuthentication remoteAuthentication =  remoteAuthenticationAtomicReference.get();
-            LocalDateTime expirationDateTime = remoteAuthentication.getExpirationDateTime();
-            if (expirationDateTime == null || LocalDateTime.now().isAfter(expirationDateTime)) {
+            RemoteAuthentication remoteAuthentication = remoteAuthenticationAtomicReference.get();
+            Instant expiration = remoteAuthentication.getExpirationDateTime();
+            if (expiration == null || Instant.now().isAfter(expiration)) {
                 logoutAction.run();
             }
         }
@@ -852,6 +861,7 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
             mainFrameWindow.closeUtilityPanelIf(PanelPosition.RIGHT, ProcessNodeFormView.class);
         });
 
+        stopSessionTimer();
         contextMap.clear();
         remoteAuthenticationAtomicReference.set(null);
         this.processAttachMap.forEach((key, attacher) -> {
@@ -874,6 +884,38 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
                 mainFrameWindow.setAlwaysOnTop(false);
             });
         }
+    }
+
+    private void startSessionTimer() {
+        RemoteAuthentication auth = remoteAuthenticationAtomicReference.get();
+        if (auth == null) return;
+
+        Instant expiresAt = auth.getExpirationDateTime();
+        if (expiresAt == null) return;
+
+        ScheduledFuture<?> future = sessionTimeSchedule.scheduleAtFixedRate(() -> {
+            Duration remaining = Duration.between(Instant.now(), expiresAt);
+
+            if (remaining.isNegative() || remaining.isZero()) {
+                stopSessionTimer();
+                logoutAction.run();
+                return;
+            }
+
+            String time = String.format("%02d:%02d:%02d",
+                    remaining.toHours(),
+                    remaining.toMinutesPart(),
+                    remaining.toSecondsPart());
+            invokeLater(() -> remoteClientView.setSessionTime(time));
+        }, 0, 1, TimeUnit.SECONDS);
+
+        sessionTimerFuture.set(future);
+    }
+
+    private void stopSessionTimer() {
+        ScheduledFuture<?> future = sessionTimerFuture.getAndSet(null);
+        if (future != null) future.cancel(false);
+        invokeLater(() -> remoteClientView.setSessionTime("00:00:00"));
     }
 
 }

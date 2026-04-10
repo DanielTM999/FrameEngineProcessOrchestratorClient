@@ -21,6 +21,7 @@ import java.security.*;
 import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPublicKeySpec;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HashMap;
@@ -64,7 +65,7 @@ public class RemoteAuthenticationServerServicesImpl implements RemoteAuthenticat
                 }
 
                 @Override
-                public LocalDateTime getExpirationDateTime() {
+                public Instant getExpirationDateTime() {
                     return null;
                 }
 

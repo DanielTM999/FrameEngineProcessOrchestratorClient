@@ -1,10 +1,10 @@
 package dtm.plugins.models.remote;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public interface RemoteAuthentication {
     boolean isAuthenticated();
     String getToken();
-    LocalDateTime getExpirationDateTime();
+    Instant getExpirationDateTime();
     String getBaseUrl();
 }
