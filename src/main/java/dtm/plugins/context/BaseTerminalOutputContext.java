@@ -43,7 +43,7 @@ public class BaseTerminalOutputContext {
     }
 
     public void appendOutputLine(String text) {
-        appendOutput(text + System.lineSeparator());
+        appendOutput(text + "\r"+System.lineSeparator());
     }
 
     public void clearLog() {
@@ -95,4 +95,5 @@ public class BaseTerminalOutputContext {
                 "$1 " + CYA + "$2" + RST);
         return text;
     }
+
 }

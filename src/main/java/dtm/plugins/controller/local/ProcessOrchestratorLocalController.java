@@ -163,6 +163,7 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
                     ctx.setRunning(true);
                 }else if(processEvents == ProcessEvents.STOPPED || processEvents == ProcessEvents.DESTROYED){
                     ctx.setRunning(false);
+                    ctx.appendOutputLine("Process stopped");
                 }
             }
 
@@ -722,7 +723,7 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
 
         if (ctx != null) {
             writeExecutor.submit(() -> {
-                ctx.appendOutput(event.getProcessOutput());
+                ctx.appendOutputLine(event.getProcessOutput());
             });
         }
     }
@@ -744,7 +745,7 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
                 PrintWriter pw = new java.io.PrintWriter(sw);
                 error.printStackTrace(pw);
                 String stackTrace = sw.toString();
-                ctx.appendOutput("[ERROR] "+stackTrace);
+                ctx.appendOutputLine("[ERROR] "+stackTrace);
             });
         }
     }
