@@ -88,6 +88,22 @@ public class ProcessServerServicesImpl extends BaseHttpRemoteService implements 
     }
 
     @Override
+    public ProcessRemoteServer restart(String processId) {
+        try{
+            RemoteAuthentication authentication = getRemoteAuthentication();
+            String url = getUrlFormated(authentication.getBaseUrl(), "/process/restart/"+processId);
+            Map<String, String> headers = getHeaderAuthentication(authentication, true);
+            HttpRequestResult<ProcessRemoteServerImpl> requestResult = httpAction.post(url, "", headers);
+
+            return requestResult.getBody(ProcessRemoteServerImpl.class).orElseThrow();
+        } catch (HttpException e) {
+            throw new DisplayException("Erro ao se comunicar com o servidor remoto").title("Conexão Interrompida");
+        } catch (Exception e) {
+            throw new DisplayException(e.getMessage()).title("Erro ao reiniciar o processo");
+        }
+    }
+
+    @Override
     public ProcessRemoteServer save(ProcessDTO processDTO) {
         try{
             RemoteAuthentication authentication = getRemoteAuthentication();

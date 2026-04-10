@@ -7,6 +7,7 @@ import dtm.apps.core.extension.PluginMemory;
 import dtm.apps.core.extension.WindowPluginAdapter;
 import dtm.apps.core.extension.WindowPluginContext;
 import dtm.apps.exceptions.DisplayException;
+import dtm.apps.models.enums.PanelPosition;
 import dtm.apps.services.listeners.Listener;
 import dtm.apps.services.listeners.impl.ListenerStorage;
 import dtm.apps.views.MainFrameWindow;
@@ -63,11 +64,17 @@ public class ProcessOrchestratorClientPluginLaunch extends WindowPluginAdapter {
     @Override
     public void onContextChange(WindowPluginContext context) {
         super.onContextChange(context);
+        MainFrameWindow frameWindow = getContextWindowAs(MainFrameWindow.class);
         isSelfContext.set(context.isPluginContext());
         if(context.getComponent() instanceof ProcessOrchestratorLocalClientView processOrchestratorLocalClientView) {
             processOrchestratorLocalClientView.loadSession();
         }else if(context.getComponent() instanceof ProcessOrchestratorRemoteClientView processOrchestratorRemoteClientView) {
             processOrchestratorRemoteClientView.loadSession();
+        }
+
+        if(!context.isPluginContext()){
+            frameWindow.closeUtilityPanelIf(PanelPosition.RIGHT, ProcessOrchestratorClientPluginLaunch.class.getClassLoader());
+            frameWindow.closeUtilityPanelIf(PanelPosition.BOTTOM, ProcessOrchestratorClientPluginLaunch.class.getClassLoader());
         }
     }
 

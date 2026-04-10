@@ -1,7 +1,6 @@
 package dtm.plugins.controller.remote;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import dtm.apps.core.ApplicationProperties;
 import dtm.apps.core.WindowFactory;
 import dtm.apps.core.extension.PluginContext;
@@ -16,7 +15,6 @@ import dtm.manager.process.dto.ProcessDTO;
 import dtm.manager.process.enums.ProcessEvents;
 import dtm.manager.process.enums.ProcessManagerEvent;
 import dtm.plugins.ProcessOrchestratorClientPluginLaunch;
-import dtm.plugins.context.LocalProcessContext;
 import dtm.plugins.context.LockContext;
 import dtm.plugins.context.RemoteProcessContext;
 import dtm.plugins.exceptions.DisconnectedException;
@@ -54,12 +52,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -91,6 +84,7 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
         return t;
     });
 
+    private final Set<String> restartProcesses = ConcurrentHashMap.newKeySet();
     private final Map<String, ProcessAttachListenerService> processAttachMap = new ConcurrentHashMap<>();
     private final Map<String, RemoteProcessContext> contextMap = new ConcurrentHashMap<>();
 
@@ -211,8 +205,12 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
 
             if(eventType == ProcessEvents.STARTING || eventType == ProcessEvents.RUNNING){
                 ctx.setRunning(true);
+                restartProcesses.remove(ctx.getProcessDefinitionId());
             }else if(eventType == ProcessEvents.STOPPED || eventType == ProcessEvents.DESTROYED){
-                ctx.setRunning(false);
+                if(!restartProcesses.contains(ctx.getProcessDefinitionId())){
+                    ctx.setRunning(false);
+                    ctx.setMonitoring(false);
+                }
             }
 
         }
@@ -563,7 +561,22 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
             menu.add(btnStop);
 
 
-            if(!ctx.isMonitoring()){
+            if(ctx.isMonitoring()){
+                JMenuItem btnMonitor = new JMenuItem("Interromper Monitoramento");
+                btnMonitor.addActionListener(evt -> {
+                    int option = ModernDialog.builder()
+                            .type(ModernDialog.Type.QUESTION)
+                            .accentColor(new Color(220, 53, 69))
+                            .title("Interromper Monitoramento")
+                            .message("Deseja realmente parar o monitoramento deste processo?")
+                            .option("Sim", 0, new Color(220, 53, 69), Color.WHITE)
+                            .option("Não", 1)
+                            .show();
+
+                    if (option == 0) stopMonitoring(ctx);
+                });
+                menu.add(btnMonitor);
+            }else{
                 JMenuItem btnMonitor = new JMenuItem("Monitorar (Abrir Terminal)");
                 btnMonitor.addActionListener(evt -> {
                     showTerminalMonitor(ctx);
@@ -583,7 +596,7 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
 
             JMenuItem btnRestart = new JMenuItem("Reiniciar");
             btnRestart.addActionListener(evt -> {
-                //restartProcess(ctx);
+                restartProcess(ctx);
             });
             menu.add(btnRestart);
 
@@ -643,6 +656,7 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
         try{
             getProcessServerServices().start(ctx.getProcessDefinitionId());
             attachRunningProcess(ctx, option == 0);
+            ctx.setMonitoring(true);
         }finally {
             loadingDialog.dispose();
         }
@@ -664,9 +678,19 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
             processAttachListenerService.onError((e) -> ProcessOrchestratorRemoteClientController.this.onProcessAttachError(e, ctx));
             processAttachListenerService.attach();
 
-
             return processAttachListenerService;
         });
+    }
+
+    private void stopMonitoring(RemoteProcessContext ctx){
+        ProcessAttachListenerService attacher = processAttachMap.remove(ctx.getProcessDefinitionId());
+        if(attacher == null) return;
+        try {
+            attacher.interrupt();
+        } catch (Exception e) {
+            log.error("Erro ao limpar", e);
+        }
+        ctx.setMonitoring(false);
     }
 
     private void stopProcess(RemoteProcessContext ctx){
@@ -695,6 +719,45 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
 
         }
     }
+
+    private void restartProcess(RemoteProcessContext ctx){
+        int option = ModernDialog.builder()
+                .type(ModernDialog.Type.INFO)
+                .accentColor(new Color(59, 130, 246))
+                .title("Reiniciar o Processo")
+                .message("Essa ação irá reiniciar o processo remoto imediatamente. Deseja continuar?")
+                .option("Não", 0)
+                .option("Sim", 1, new Color(220, 53, 69), Color.WHITE)
+                .show();
+
+        if(option != 1) return;
+
+        int optionLog = ModernDialog.builder()
+                .type(ModernDialog.Type.INFO)
+                .accentColor(new Color(59, 130, 246))
+                .title("Histórico de Logs")
+                .message("Deseja recuperar as saídas (logs) anteriores deste processo?")
+                .option("Sim", 0)
+                .option("Não", 1, new Color(220, 53, 69), Color.WHITE)
+                .show();
+
+
+        LoadingDialog loadingDialog = windowFactory.newWindow(LoadingDialog.class, false, new Object[]{
+                pluginContext.getContextWindow(),
+                "Inciando Processo",
+                "Inciando Processo: "+ctx.getProcessName()
+        });
+
+        try{
+            getProcessServerServices().restart(ctx.getProcessDefinitionId());
+            restartProcesses.add(ctx.getProcessDefinitionId());
+            attachRunningProcess(ctx, optionLog == 0);
+            ctx.setMonitoring(true);
+        }finally {
+            loadingDialog.dispose();
+        }
+    }
+
 
     private void showTerminalMonitor(RemoteProcessContext ctx){
         mainFrameWindow.runOnUi((t) -> {

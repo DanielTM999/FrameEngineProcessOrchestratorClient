@@ -6,9 +6,7 @@ public class LogColorizer {
 
     private static final String RST  = "\033[0m";
     private static final String RED  = "\033[31m";
-    private static final String GRN  = "\033[32m";
     private static final String YEL  = "\033[33m";
-    private static final String BLU  = "\033[34m";
     private static final String MAG  = "\033[35m";
     private static final String CYA  = "\033[36m";
     private static final String WHT  = "\033[37m";
@@ -19,6 +17,7 @@ public class LogColorizer {
     private static final String BBLU = "\033[94m";
     private static final String BMAG = "\033[95m";
     private static final String BCYA = "\033[96m";
+    private static final String UND  = "\033[4m";
 
     private LogColorizer() {}
 
@@ -108,7 +107,7 @@ public class LogColorizer {
     private static String colorizeUrls(String text) {
         return text.replaceAll(
                 "(https?://[\\w\\-._~:/?#\\[\\]@!$&'()*+,;=%]+)",
-                BLU + "$1" + RST);
+                UND + BCYA + "$1" + RST);
     }
 
     private static String colorizeExceptions(String text) {

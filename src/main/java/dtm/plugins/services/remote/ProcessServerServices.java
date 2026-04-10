@@ -12,6 +12,7 @@ public interface ProcessServerServices {
 
     ProcessRemoteServer start(String processId);
     ProcessRemoteServer stop(String processId);
+    ProcessRemoteServer restart(String processId);
 
     ProcessRemoteServer save(ProcessDTO processDTO);
     ProcessRemoteServer save(String processId, ProcessDTO processDTO);
