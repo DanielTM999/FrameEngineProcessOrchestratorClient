@@ -261,8 +261,12 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
                     processMetadata(ctx, content);
                     break;
                 }
-                case "PROCESS-OUTPUT" -> {
+                case "PROCESS-OUTPUT", "OUTPUT-LOG" -> {
                     ctx.appendOutputLine(content);
+                    break;
+                }
+                case "ERROR-LOG" -> {
+                    ctx.appendOutputLine("[ERROR] "+content);
                     break;
                 }
                 case "USER-NOTIFY" -> {
@@ -563,6 +567,7 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
                             .option("Não", 1, new Color(220, 53, 69), Color.WHITE)
                             .show();
                     attachRunningProcess(ctx, option == 0);
+                    ctx.setMonitoring(true);
                 });
                 menu.add(btnMonitor);
             }
