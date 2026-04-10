@@ -109,12 +109,12 @@ public class ProcessNodeFormView extends BlockingPanel {
         form.setOpaque(false);
         form.setBorder(new EmptyBorder(14, 14, 14, 14));
 
-        fieldId       = field(source != null ? source.getProcessId()                   : "");
-        fieldName     = field(source != null ? source.getProcessName()                  : "");
-        fieldEnv      = pathField(source != null ? source.getExecutionEnvironment()     : "");
-        fieldExecPath = pathField(source != null ? source.getExecutablePath()           : "");
-        fieldTimeout  = field(source != null ? String.valueOf(source.getStartTimeout()) : "0");
-        fieldCommand  = new SyntaxCommandPanel(source != null ? source.getCommand(): "");
+        fieldId = field(source != null ? source.getProcessId(): "");
+        fieldName= field(source != null ? source.getProcessName(): "");
+        fieldEnv = pathField(source != null ? source.getExecutionEnvironment(): "");
+        fieldExecPath = pathField(source != null ? source.getExecutablePath(): "");
+        fieldTimeout = field(source != null ? String.valueOf(source.getStartTimeout()) : "0");
+        fieldCommand = new SyntaxCommandPanel(source != null ? source.getCommand(): "");
 
         fieldType = new DropdownField(PROCESS_TYPES.toArray());
         fieldType.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
@@ -126,8 +126,11 @@ public class ProcessNodeFormView extends BlockingPanel {
         }
 
         fieldRestart = new JComboBox<>(RestartPolicy.values());
-        if (source != null && source.getRestartPolicy() != null)
-            fieldRestart.setSelectedItem(source.getRestartPolicy());
+        fieldRestart.setSelectedItem(
+                source != null && source.getRestartPolicy() != null
+                        ? source.getRestartPolicy()
+                        : RestartPolicy.NEVER
+        );
         fieldRestart.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
 
         fieldCondition = new ExecutionConditionPanel( source != null ? source.getExecutionCondition() : null);
