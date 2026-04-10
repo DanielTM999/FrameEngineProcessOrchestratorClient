@@ -45,5 +45,4 @@ public class LnfTerminalSettingsProvider extends DefaultSettingsProvider {
     }
 
 
-
 }

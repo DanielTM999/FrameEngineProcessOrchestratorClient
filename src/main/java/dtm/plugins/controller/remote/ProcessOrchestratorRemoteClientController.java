@@ -262,11 +262,11 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
                     break;
                 }
                 case "PROCESS-OUTPUT", "OUTPUT-LOG" -> {
-                    ctx.appendOutputLine(content);
+                    ctx.appendOutput(content);
                     break;
                 }
                 case "ERROR-LOG" -> {
-                    ctx.appendOutputLine("[ERROR] "+content);
+                    ctx.appendOutput("[ERROR] "+content);
                     break;
                 }
                 case "USER-NOTIFY" -> {
@@ -460,7 +460,7 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
         metadataMap.forEach((key, value) -> {
             formattedLog.append("[").append(key).append("]: ").append(value).append(System.lineSeparator());
         });
-        ctx.appendOutputLine(formattedLog.toString());
+        ctx.appendOutput(formattedLog.toString());
     }
 
 

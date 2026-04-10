@@ -684,7 +684,7 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
 
         if (ctx != null) {
             writeExecutor.submit(() -> {
-                ctx.appendOutputLine(event.getProcessOutput());
+                ctx.appendOutput(event.getProcessOutput());
             });
         }
     }
@@ -706,7 +706,7 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
                 PrintWriter pw = new java.io.PrintWriter(sw);
                 error.printStackTrace(pw);
                 String stackTrace = sw.toString();
-                ctx.appendOutputLine("[ERROR] "+stackTrace);
+                ctx.appendOutput("[ERROR] "+stackTrace);
             });
         }
     }
