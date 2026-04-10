@@ -64,7 +64,9 @@ public class BaseTerminalOutputContext {
 
     private String colorizeLogLevel(String text) {
         if (text.contains("[DEBUG]") || text.contains("[TRACE]") ||
-                text.matches(TS + "(DEBUG|TRACE)\\b.*")) {
+                text.contains("[DBG]") || text.contains("[TRC]") ||
+                text.contains("[VERBOSE]") || text.contains("[FINE]") ||
+                text.matches(TS + "(DEBUG|TRACE|DBG|TRC|VERBOSE|FINE)\\b.*")) {
             return GRY + text + RST;
         }
 
@@ -72,14 +74,25 @@ public class BaseTerminalOutputContext {
                 .replace("[ERROR]",   "[" + RED + "ERROR"   + RST + "]")
                 .replace("[ERRO]",    "[" + RED + "ERRO"    + RST + "]")
                 .replace("[SEVERE]",  "[" + RED + "SEVERE"  + RST + "]")
+                .replace("[ERR]",     "[" + RED + "ERR"     + RST + "]")
+                .replace("[FATAL]",   "[" + RED + "FATAL"   + RST + "]")
+                .replace("[CRITICAL]","[" + RED + "CRITICAL"+ RST + "]")
+                .replace("[CRIT]",    "[" + RED + "CRIT"    + RST + "]")
+                .replace("[FAIL]",    "[" + RED + "FAIL"    + RST + "]")
+                .replace("[FAILED]",  "[" + RED + "FAILED"  + RST + "]")
                 .replace("[WARN]",    "[" + YEL + "WARN"    + RST + "]")
                 .replace("[WARNING]", "[" + YEL + "WARNING" + RST + "]")
-                .replace("[INFO]",    "[" + CYA + "INFO"    + RST + "]");
+                .replace("[WRN]",     "[" + YEL + "WRN"     + RST + "]")
+                .replace("[INFO]",    "[" + CYA + "INFO"    + RST + "]")
+                .replace("[INF]",     "[" + CYA + "INF"     + RST + "]")
+                .replace("[NOTICE]",  "[" + CYA + "NOTICE"  + RST + "]");
 
-        text = text.replaceAll(TS + "(ERROR|ERRO|SEVERE)\\b",  "$1 " + RED + "$2" + RST);
-        text = text.replaceAll(TS + "(WARN|WARNING)\\b",       "$1 " + YEL + "$2" + RST);
-        text = text.replaceAll(TS + "(INFO)\\b",               "$1 " + CYA + "$2" + RST);
-
+        text = text.replaceAll(TS + "(ERROR|ERRO|SEVERE|ERR|FATAL|CRITICAL|CRIT|FAIL|FAILED)\\b",
+                "$1 " + RED + "$2" + RST);
+        text = text.replaceAll(TS + "(WARN|WARNING|WRN)\\b",
+                "$1 " + YEL + "$2" + RST);
+        text = text.replaceAll(TS + "(INFO|INF|NOTICE)\\b",
+                "$1 " + CYA + "$2" + RST);
         return text;
     }
 }
