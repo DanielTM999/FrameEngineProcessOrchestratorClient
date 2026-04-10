@@ -7,6 +7,7 @@ import dtm.apps.models.enums.PanelPosition;
 import dtm.apps.views.MainFrameWindow;
 import dtm.di.annotations.aop.DisableAop;
 import dtm.manager.ProcessOrchestratorManager;
+import dtm.manager.common.exception.ProcessModificationException;
 import dtm.manager.common.exception.ProcessNotFoundException;
 import dtm.manager.common.exception.StartProcessException;
 import dtm.manager.process.definition.ProcessDefinition;
@@ -257,23 +258,42 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
 
 
     private void onSaveProcessNodeModel(ProcessNodeModel model, ProcessNodeModel parent, ProcessPhase phase){
-        ProcessNodeModel root = pipelineView.getCurrent();
-        String processId = root.getProcessId();
-        if(phase == ProcessPhase.AFTER){
-            if(parent.getSubProcessesAfter() == null){
-                parent.setSubProcessesAfter(new ArrayList<>());
+        try{
+            ProcessNodeModel root = pipelineView.getCurrent();
+            String processId = root.getProcessId();
+            if(phase == ProcessPhase.AFTER){
+                if(parent.getSubProcessesAfter() == null){
+                    parent.setSubProcessesAfter(new ArrayList<>());
+                }
+                parent.getSubProcessesAfter().add(model);
+            }else{
+                if(parent.getSubProcessesBefore() == null){
+                    parent.setSubProcessesBefore(new ArrayList<>());
+                }
+                parent.getSubProcessesBefore().add(model);
             }
-            parent.getSubProcessesAfter().add(model);
-        }else{
-            if(parent.getSubProcessesBefore() == null){
-                parent.setSubProcessesBefore(new ArrayList<>());
+            ProcessDTO processDTO = ProcessNodeModel.toProcessDTO(root);
+            ProcessOrchestratorManager processOrchestrator = processOrchestratorRef.get();
+            processOrchestrator.getProcessManager().saveProcess(processId, processDTO);
+            hideLateralRightDetailsPanel();
+
+        }catch (ProcessModificationException e){
+            StringBuilder sb = new StringBuilder();
+            sb.append("<html>Não foi possível salvar o processo <b>'")
+                    .append(e.getProcessId())
+                    .append("'</b>.<br><br>");
+
+            if (e.getErrors() != null && !e.getErrors().isEmpty()) {
+                sb.append("Erros encontrados:<br>");
+                for (String error : e.getErrors()) {
+                    sb.append("&bull;&nbsp;").append(error).append("<br>");
+                }
             }
-            parent.getSubProcessesBefore().add(model);
+
+            sb.append("</html>");
+
+            throw new DisplayException(sb.toString()).title("Falha ao Salvar Processo");
         }
-        ProcessDTO processDTO = ProcessNodeModel.toProcessDTO(root);
-        ProcessOrchestratorManager processOrchestrator = processOrchestratorRef.get();
-        processOrchestrator.getProcessManager().saveProcess(processId, processDTO);
-        hideLateralRightDetailsPanel();
     }
 
     private void onSaveProcessNodeModel(ProcessNodeModel model){
@@ -281,17 +301,35 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
     }
 
     private void onSaveProcessNodeModel(ProcessNodeModel model, boolean newProcess){
-        ProcessOrchestratorManager processOrchestrator = processOrchestratorRef.get();
-        if(newProcess){
-            ProcessDTO processDTO = ProcessNodeModel.toProcessDTO(model);
-            processOrchestrator.getProcessManager().saveProcess(processDTO);
-        }else{
-            ProcessNodeModel root = pipelineView.getCurrent();
-            String processId = root.getProcessId();
-            ProcessDTO processDTO = ProcessNodeModel.toProcessDTO(root);
-            processOrchestrator.getProcessManager().saveProcess(processId, processDTO);
-        }
-        hideLateralRightDetailsPanel();
+          try{
+              ProcessOrchestratorManager processOrchestrator = processOrchestratorRef.get();
+              if(newProcess){
+                  ProcessDTO processDTO = ProcessNodeModel.toProcessDTO(model);
+                  processOrchestrator.getProcessManager().saveProcess(processDTO);
+              }else{
+                  ProcessNodeModel root = pipelineView.getCurrent();
+                  String processId = root.getProcessId();
+                  ProcessDTO processDTO = ProcessNodeModel.toProcessDTO(root);
+                  processOrchestrator.getProcessManager().saveProcess(processId, processDTO);
+              }
+              hideLateralRightDetailsPanel();
+          } catch (ProcessModificationException e) {
+              StringBuilder sb = new StringBuilder();
+              sb.append("<html>Não foi possível salvar o processo <b>'")
+                      .append(e.getProcessId())
+                      .append("'</b>.<br><br>");
+
+              if (e.getErrors() != null && !e.getErrors().isEmpty()) {
+                  sb.append("Erros encontrados:<br>");
+                  for (String error : e.getErrors()) {
+                      sb.append("&bull;&nbsp;").append(error).append("<br>");
+                  }
+              }
+
+              sb.append("</html>");
+
+              throw new DisplayException(sb.toString()).title("Falha ao Salvar Processo");
+          }
     }
 
 
