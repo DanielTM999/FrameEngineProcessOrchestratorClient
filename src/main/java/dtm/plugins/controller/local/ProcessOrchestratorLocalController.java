@@ -641,7 +641,7 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
             ctx.setProcessExecutor(null);
         }
 
-        invokeLater(() -> ctx.getProcessSidebar().setRunning(isRunning));
+        invokeLater(() -> ctx.setRunning(isRunning));
     }
 
     private ProcessNodeModel findNodeRecursive(ProcessNodeModel node, String targetId) {

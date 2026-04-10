@@ -261,15 +261,6 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
 
 
 
-    private String toHex(String s) {
-        StringBuilder sb = new StringBuilder();
-        for (char c : s.toCharArray()) {
-            if (c < 32) sb.append(String.format("\\u%04X", (int)c));
-            else sb.append(c);
-        }
-        return sb.toString();
-    }
-
     private void onProcessAttachEvent(String event, String content, RemoteProcessContext ctx){
         event = ((event != null) ? event : "").toUpperCase();
 
@@ -280,7 +271,6 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
                     break;
                 }
                 case "PROCESS-OUTPUT", "OUTPUT-LOG" -> {
-                    log.info("RAW output hex: {}", toHex(content));
                     ctx.appendOutputLine(content.replace("\\u001B", "\u001B"));
                     break;
                 }

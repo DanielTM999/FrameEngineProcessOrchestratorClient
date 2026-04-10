@@ -2,6 +2,7 @@ package dtm.plugins.context;
 
 import dtm.apps.core.extension.PluginContext;
 import dtm.plugins.services.OutputTtyConnector;
+import dtm.plugins.services.utils.LogColorizer;
 import dtm.plugins.views.components.terminal.LnfTerminalSettingsProvider;
 import dtm.plugins.views.components.terminal.TerminalViewPanel;
 import dtm.plugins.views.components.terminal.TerminalWidget;
@@ -11,13 +12,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public class BaseTerminalOutputContext {
-
-    private static final String TS = "^((?:\\d{2,4}[/\\-]\\d{2}[/\\-]\\d{2,4}[T ])?\\d{2}:\\d{2}[:\\d.+\\-]*)\\s+";
-    private static final String RST = "\033[0m";
-    private static final String RED = "\033[31m";
-    private static final String YEL = "\033[33m";
-    private static final String CYA = "\033[36m";
-    private static final String GRY = "\033[90m";
 
     @Getter
     protected final StringBuffer outputBuffer;
@@ -39,7 +33,7 @@ public class BaseTerminalOutputContext {
 
     public void appendOutput(String text) {
         outputBuffer.append(text);
-        connector.feed(colorizeLogLevel(text));
+        connector.feed(LogColorizer.colorize(text));
     }
 
     public void appendOutputLine(String text) {
@@ -60,40 +54,6 @@ public class BaseTerminalOutputContext {
 
     private TerminalViewPanel createMonitorPanel(PluginContext pluginContext) {
         return new TerminalViewPanel(pluginContext, connector, terminalWidget);
-    }
-
-    private String colorizeLogLevel(String text) {
-        if (text.contains("[DEBUG]") || text.contains("[TRACE]") ||
-                text.contains("[DBG]") || text.contains("[TRC]") ||
-                text.contains("[VERBOSE]") || text.contains("[FINE]") ||
-                text.matches(TS + "(DEBUG|TRACE|DBG|TRC|VERBOSE|FINE)\\b.*")) {
-            return GRY + text + RST;
-        }
-
-        text = text
-                .replace("[ERROR]",   "[" + RED + "ERROR"   + RST + "]")
-                .replace("[ERRO]",    "[" + RED + "ERRO"    + RST + "]")
-                .replace("[SEVERE]",  "[" + RED + "SEVERE"  + RST + "]")
-                .replace("[ERR]",     "[" + RED + "ERR"     + RST + "]")
-                .replace("[FATAL]",   "[" + RED + "FATAL"   + RST + "]")
-                .replace("[CRITICAL]","[" + RED + "CRITICAL"+ RST + "]")
-                .replace("[CRIT]",    "[" + RED + "CRIT"    + RST + "]")
-                .replace("[FAIL]",    "[" + RED + "FAIL"    + RST + "]")
-                .replace("[FAILED]",  "[" + RED + "FAILED"  + RST + "]")
-                .replace("[WARN]",    "[" + YEL + "WARN"    + RST + "]")
-                .replace("[WARNING]", "[" + YEL + "WARNING" + RST + "]")
-                .replace("[WRN]",     "[" + YEL + "WRN"     + RST + "]")
-                .replace("[INFO]",    "[" + CYA + "INFO"    + RST + "]")
-                .replace("[INF]",     "[" + CYA + "INF"     + RST + "]")
-                .replace("[NOTICE]",  "[" + CYA + "NOTICE"  + RST + "]");
-
-        text = text.replaceAll(TS + "(ERROR|ERRO|SEVERE|ERR|FATAL|CRITICAL|CRIT|FAIL|FAILED)\\b",
-                "$1 " + RED + "$2" + RST);
-        text = text.replaceAll(TS + "(WARN|WARNING|WRN)\\b",
-                "$1 " + YEL + "$2" + RST);
-        text = text.replaceAll(TS + "(INFO|INF|NOTICE)\\b",
-                "$1 " + CYA + "$2" + RST);
-        return text;
     }
 
 }
