@@ -39,17 +39,17 @@ public class ProcessNodeFormView extends BlockingPanel {
     private final Mode mode;
     private final ProcessNodeModel source;
 
-    private MaskedTextField          fieldId;
-    private MaskedTextField          fieldName;
-    private PathTextField            fieldEnv;
-    private PathTextField            fieldExecPath;
-    private DropdownField            fieldType;
-    private MaskedTextField          fieldTimeout;
-    private SyntaxCommandPanel       fieldCommand;
-    private JTextArea                fieldDescription;
-    private ExecutionConditionPanel  fieldCondition;
+    private MaskedTextField fieldId;
+    private MaskedTextField fieldName;
+    private PathTextField fieldEnv;
+    private PathTextField fieldExecPath;
+    private DropdownField fieldType;
+    private MaskedTextField fieldTimeout;
+    private SyntaxCommandPanel fieldCommand;
+    private JTextArea fieldDescription;
+    private ExecutionConditionPanel fieldCondition;
     private JComboBox<RestartPolicy> fieldRestart;
-    private ArgsListPanel            argsPanel;
+    private ArgsListPanel argsPanel;
 
     private Consumer<ProcessNodeModel> onSave;
     private Runnable onCancel;
