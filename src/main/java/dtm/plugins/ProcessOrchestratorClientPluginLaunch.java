@@ -81,22 +81,12 @@ public class ProcessOrchestratorClientPluginLaunch extends WindowPluginAdapter {
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
+        shutdown();
     }
 
     @Override
-    public void onPrepareReload() {
-        PluginMemory pluginMemory = getMemory(LockContext.INSTANCE);
-
-        if(pluginMemory.contains(Constants.PROCESS_ORCHESTRATOR_LOCAL_KEY)){
-            Object object = pluginMemory.get(Constants.PROCESS_ORCHESTRATOR_LOCAL_KEY);
-            if(object instanceof ProcessOrchestratorManager processOrchestratorManager){
-                processOrchestratorManager.shutdown();
-            }
-        }
-
-        pluginMemory.clear();
-        getMemory().clear();
+    public void onDisable() {
+        shutdown();
     }
 
     public Collection<JPanel> createContexts() {
@@ -217,4 +207,17 @@ public class ProcessOrchestratorClientPluginLaunch extends WindowPluginAdapter {
         }
     }
 
+    private void shutdown(){
+        PluginMemory pluginMemory = getMemory(LockContext.INSTANCE);
+
+        if(pluginMemory.contains(Constants.PROCESS_ORCHESTRATOR_LOCAL_KEY)){
+            Object object = pluginMemory.get(Constants.PROCESS_ORCHESTRATOR_LOCAL_KEY);
+            if(object instanceof ProcessOrchestratorManager processOrchestratorManager){
+                processOrchestratorManager.shutdown();
+            }
+        }
+
+        pluginMemory.clear();
+        getMemory().clear();
+    }
 }
