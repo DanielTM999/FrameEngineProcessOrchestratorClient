@@ -2,7 +2,6 @@ package dtm.plugins.services.remote.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dtm.apps.annotations.PluginReference;
 import dtm.apps.core.extension.Context;
 import dtm.apps.exceptions.DisplayException;
@@ -14,7 +13,7 @@ import dtm.plugins.models.Constants;
 import dtm.plugins.models.remote.ProcessRemoteServer;
 import dtm.plugins.models.remote.RemoteAuthentication;
 import dtm.plugins.models.remote.impl.ProcessRemoteServerImpl;
-import dtm.plugins.exceptions.DisconnectedException;
+import dtm.plugins.exceptions.DisconnectedEventException;
 import dtm.plugins.models.remote.res.ErrorResponse;
 import dtm.plugins.services.remote.ProcessServerServices;
 import dtm.plugins.services.remote.attacher.ProcessAttachListenerService;
@@ -42,7 +41,7 @@ public class ProcessServerServicesImpl extends BaseHttpRemoteService implements 
         String url = getUrlFormated(authentication.getBaseUrl(), "/process");
 
         HttpRequestResult<JsonNode> requestResult = httpAction.get(url, getHeaderAuthentication(authentication, true));
-        JsonNode rootNode = requestResult.getBody(JsonNode.class).orElseThrow(DisconnectedException::new);
+        JsonNode rootNode = requestResult.getBody(JsonNode.class).orElseThrow(DisconnectedEventException::new);
         JsonNode processesNode = rootNode.get("proceses");
         if (processesNode == null || !processesNode.isArray()) {
             return List.of();

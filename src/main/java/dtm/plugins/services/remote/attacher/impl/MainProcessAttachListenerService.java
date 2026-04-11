@@ -1,6 +1,7 @@
 package dtm.plugins.services.remote.attacher.impl;
 
-import dtm.plugins.exceptions.DisconnectedException;
+import dtm.plugins.exceptions.DisconnectedErrorException;
+import dtm.plugins.exceptions.DisconnectedEventException;
 import dtm.plugins.models.remote.RemoteAuthentication;
 import dtm.plugins.services.remote.attacher.ProcessAttachListenerService;
 import dtm.plugins.services.remote.base.BaseHttpRemoteService;
@@ -101,7 +102,7 @@ public class MainProcessAttachListenerService extends BaseHttpRemoteService impl
 
             @Override
             public void onDisconected() {
-                if(onErrorRef.get() != null) onErrorRef.get().accept(new DisconnectedException());
+                if(onErrorRef.get() != null) onErrorRef.get().accept(new DisconnectedErrorException("Não foi possível se comunicar com o servidor remoto. Verifique sua conexão e tente novamente.").title("Conexão Interrompida"));
             }
         };
     }

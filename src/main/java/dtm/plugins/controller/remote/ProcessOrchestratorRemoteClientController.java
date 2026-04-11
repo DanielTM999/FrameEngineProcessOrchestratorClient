@@ -17,7 +17,8 @@ import dtm.manager.process.enums.ProcessManagerEvent;
 import dtm.plugins.ProcessOrchestratorClientPluginLaunch;
 import dtm.plugins.context.LockContext;
 import dtm.plugins.context.RemoteProcessContext;
-import dtm.plugins.exceptions.DisconnectedException;
+import dtm.plugins.exceptions.DisconnectedErrorException;
+import dtm.plugins.exceptions.DisconnectedEventException;
 import dtm.plugins.models.Constants;
 import dtm.plugins.models.ProcessNodeModel;
 import dtm.plugins.models.UserNotificationContent;
@@ -248,8 +249,9 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
             ProcessAttachListenerService current = processAttachListenerServiceRef.get();
             if (current == null || current.isClosed()) return;
 
-            if (throwable instanceof DisconnectedException) {
+            if (throwable instanceof DisconnectedErrorException e) {
                 logoutAction.run();
+                throw e;
             } else {
                 log.warn("Conexão SSE perdida, reconectando em 3s...");
                 virtualExecutor.submit(() -> {

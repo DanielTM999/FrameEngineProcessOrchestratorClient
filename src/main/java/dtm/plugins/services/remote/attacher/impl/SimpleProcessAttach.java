@@ -2,7 +2,7 @@ package dtm.plugins.services.remote.attacher.impl;
 
 
 import dtm.manager.process.definition.ProcessDefinition;
-import dtm.plugins.exceptions.DisconnectedException;
+import dtm.plugins.exceptions.DisconnectedEventException;
 import dtm.plugins.models.remote.RemoteAuthentication;
 import dtm.plugins.services.remote.attacher.ProcessAttachListenerService;
 import dtm.plugins.services.remote.base.BaseHttpRemoteService;
@@ -117,7 +117,7 @@ public class SimpleProcessAttach extends BaseHttpRemoteService implements Proces
 
             @Override
             public void onDisconected() {
-                if(onErrorRef.get() != null) onErrorRef.get().accept(new DisconnectedException());
+                if(onErrorRef.get() != null) onErrorRef.get().accept(new DisconnectedEventException());
             }
         };
     }
