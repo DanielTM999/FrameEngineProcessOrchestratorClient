@@ -49,7 +49,7 @@ public class BaseTerminalOutputContext {
         TerminalWidget widget = new TerminalWidget(new LnfTerminalSettingsProvider());
         widget.setTtyConnector(connector);
         widget.start();
-        //installUrlClickListener(widget);
+        installUrlClickListener(widget);
         return widget;
     }
 

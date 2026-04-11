@@ -78,6 +78,17 @@ public class ProcessOrchestratorClientPluginLaunch extends WindowPluginAdapter {
         }
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
+
+    @Override
+    public void onPrepareReload() {
+        getMemory(LockContext.INSTANCE).clear();
+        getMemory().clear();
+    }
+
     public Collection<JPanel> createContexts() {
         return new ArrayList<>() {{
             add(createInitialView());
