@@ -46,6 +46,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -64,7 +65,10 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
     private final ApplicationProperties processOrchestratorSettingsProps;
     private final PluginContext pluginContext;
     private final AtomicReference<ProcessOrchestratorManager> processOrchestratorRef = new AtomicReference<>();
+
+    private final Set<String> stoppedNotifiedIds = ConcurrentHashMap.newKeySet();
     private final Map<String, LocalProcessContext> contextMap = new ConcurrentHashMap<>();
+
     private final ExecutorService writeExecutor = Executors.newVirtualThreadPerTaskExecutor();
     private final Runnable logoutAction;
 
@@ -137,6 +141,7 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
 
     private void loadProcess(){
         contextMap.clear();
+        stoppedNotifiedIds.clear();
         reloadAllProcess();
     }
 
@@ -161,9 +166,12 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
 
                 if(processEvents == ProcessEvents.STARTING ||  processEvents == ProcessEvents.RUNNING){
                     ctx.setRunning(true);
+                    stoppedNotifiedIds.remove(mainProcessId);
                 }else if(processEvents == ProcessEvents.STOPPED || processEvents == ProcessEvents.DESTROYED){
                     ctx.setRunning(false);
-                    ctx.appendOutputLine("Process stopped");
+                    if (stoppedNotifiedIds.add(mainProcessId)) {
+                        ctx.appendOutputLine("Process stopped");
+                    }
                 }
             }
 

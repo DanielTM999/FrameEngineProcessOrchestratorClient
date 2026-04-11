@@ -12,6 +12,7 @@ import dtm.apps.services.listeners.Listener;
 import dtm.apps.services.listeners.impl.ListenerStorage;
 import dtm.apps.views.MainFrameWindow;
 import dtm.di.annotations.aop.DisableAop;
+import dtm.manager.ProcessOrchestratorManager;
 import dtm.plugins.context.LockContext;
 import dtm.plugins.controller.ProcessOrchestratorConnectionManagerController;
 import dtm.plugins.controller.local.ProcessOrchestratorLocalController;
@@ -85,7 +86,16 @@ public class ProcessOrchestratorClientPluginLaunch extends WindowPluginAdapter {
 
     @Override
     public void onPrepareReload() {
-        getMemory(LockContext.INSTANCE).clear();
+        PluginMemory pluginMemory = getMemory(LockContext.INSTANCE);
+
+        if(pluginMemory.contains(Constants.PROCESS_ORCHESTRATOR_LOCAL_KEY)){
+            Object object = pluginMemory.get(Constants.PROCESS_ORCHESTRATOR_LOCAL_KEY);
+            if(object instanceof ProcessOrchestratorManager processOrchestratorManager){
+                processOrchestratorManager.shutdown();
+            }
+        }
+
+        pluginMemory.clear();
         getMemory().clear();
     }
 

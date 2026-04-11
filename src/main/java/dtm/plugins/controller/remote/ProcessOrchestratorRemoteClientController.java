@@ -84,6 +84,7 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
         return t;
     });
 
+    private final Set<String> stoppedNotifiedIds = ConcurrentHashMap.newKeySet();
     private final Set<String> restartProcesses = ConcurrentHashMap.newKeySet();
     private final Map<String, ProcessAttachListenerService> processAttachMap = new ConcurrentHashMap<>();
     private final Map<String, RemoteProcessContext> contextMap = new ConcurrentHashMap<>();
@@ -206,10 +207,14 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
             if(eventType == ProcessEvents.STARTING || eventType == ProcessEvents.RUNNING){
                 ctx.setRunning(true);
                 restartProcesses.remove(ctx.getProcessDefinitionId());
+                stoppedNotifiedIds.remove(mainProcessId);
             }else if(eventType == ProcessEvents.STOPPED || eventType == ProcessEvents.DESTROYED){
                 if(!restartProcesses.contains(ctx.getProcessDefinitionId())){
                     ctx.setRunning(false);
                     ctx.setMonitoring(false);
+                }
+                if (stoppedNotifiedIds.add(mainProcessId)) {
+                    ctx.appendOutputLine("Process stopped");
                 }
             }
 
@@ -925,6 +930,7 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
         });
 
         stopSessionTimer();
+        stoppedNotifiedIds.clear();
         contextMap.clear();
         remoteAuthenticationAtomicReference.set(null);
         this.processAttachMap.forEach((key, attacher) -> {
