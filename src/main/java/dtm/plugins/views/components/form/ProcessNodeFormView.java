@@ -4,6 +4,7 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.ui.FlatLineBorder;
 import dtm.manager.process.enums.RestartPolicy;
 import dtm.plugins.models.ProcessNodeModel;
+import dtm.plugins.services.utils.ConditionEditorCompletionUtil;
 import dtm.stools.component.inputfields.filepicker.FileSelectionMode;
 import dtm.stools.component.inputfields.selectfield.DropdownField;
 import dtm.stools.component.inputfields.textfield.MaskedTextField;
@@ -14,7 +15,6 @@ import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rsyntaxtextarea.Theme;
 import org.fife.ui.rtextarea.RTextScrollPane;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -514,6 +514,7 @@ public class ProcessNodeFormView extends BlockingPanel {
 
             scriptArea = buildSyntaxArea(SyntaxConstants.SYNTAX_STYLE_JAVA,
                     hasScript ? (String)initialValue : "", 8);
+            ConditionEditorCompletionUtil.install(scriptArea);
             RTextScrollPane scriptScroll = buildSyntaxScroll(scriptArea);
             scriptScroll.setPreferredSize(new Dimension(0, 180));
 

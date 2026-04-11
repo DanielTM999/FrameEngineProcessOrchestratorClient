@@ -10,6 +10,7 @@ import lombok.Getter;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Consumer;
 
 public class BaseTerminalOutputContext {
 
@@ -30,6 +31,9 @@ public class BaseTerminalOutputContext {
         this.monitorPanel = createMonitorPanel(pluginContext);
     }
 
+    public void setOnUserInput(Consumer<String> action){
+        connector.setOnUserInput(action);
+    }
 
     public void appendOutput(String text) {
         outputBuffer.append(text);

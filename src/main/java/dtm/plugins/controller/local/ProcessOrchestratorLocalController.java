@@ -12,11 +12,13 @@ import dtm.manager.common.exception.ProcessNotFoundException;
 import dtm.manager.common.exception.StartProcessException;
 import dtm.manager.process.definition.ProcessDefinition;
 import dtm.manager.process.dto.ProcessDTO;
+import dtm.manager.process.dto.ProcessInputEvent;
 import dtm.manager.process.dto.ProcessOutputEvent;
 import dtm.manager.process.engine.ProcessEngine;
 import dtm.manager.process.enums.ProcessEvents;
 import dtm.manager.process.enums.ProcessManagerEvent;
 import dtm.manager.process.runtime.ProcessExecutor;
+import dtm.manager.process.runtime.ProcessOrchestratorExecutor;
 import dtm.plugins.ProcessOrchestratorClientPluginLaunch;
 import dtm.plugins.context.LockContext;
 import dtm.plugins.models.Constants;
@@ -67,6 +69,7 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
     private final AtomicReference<ProcessOrchestratorManager> processOrchestratorRef = new AtomicReference<>();
 
     private final Set<String> stoppedNotifiedIds = ConcurrentHashMap.newKeySet();
+    private final Set<String> awaitingInput = ConcurrentHashMap.newKeySet();
     private final Map<String, LocalProcessContext> contextMap = new ConcurrentHashMap<>();
 
     private final ExecutorService writeExecutor = Executors.newVirtualThreadPerTaskExecutor();
@@ -344,7 +347,7 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
 
     private void showLateralRightDetailsPanel(JComponent component) {
         mainFrameWindow.runOnUi(w -> {
-            mainFrameWindow.requireUtilityPanel(PanelPosition.RIGHT, component, 350, 100);
+            mainFrameWindow.requireUtilityPanel(PanelPosition.RIGHT, component, 550, 100);
         });
     }
 
@@ -579,6 +582,7 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
             processEngine.start(ctx.getProcessDefinitionId(), executor -> {
                 ctx.setProcessExecutor(executor);
                 executor.addOutputListener(this::onProcessOutputListener);
+                executor.addInputListener(this::onProcessInput);
                 executor.addErrorListener(this::onProcessErrorListener);
                 executor.addUserNotifyListener(this::onProcessUserNotifyListener);
                 invokeLater(() -> ctx.setRunning(true));
@@ -622,8 +626,7 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
                     .show();
 
             if(option == 1){
-                ProcessExecutor processExecutor = processEngine.stop(ctx.getProcessDefinitionId());
-                ctx.setProcessExecutor(processExecutor);
+                processEngine.stop(ctx.getProcessDefinitionId());
             }
         }catch (ProcessNotFoundException e){
             throw new DisplayException("Erro ao parar o processo", e);
@@ -643,7 +646,7 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
         ProcessEngine processEngine = processOrchestrator.getEngine();
         boolean isRunning = processEngine.isRunning(ctx.getProcessDefinitionId());
         if (isRunning) {
-            ProcessExecutor executor = processEngine.getProcess(ctx.getProcessDefinitionId());
+            ProcessOrchestratorExecutor executor = processEngine.getProcess(ctx.getProcessDefinitionId());
             ctx.setProcessExecutor(executor);
         }else {
             ctx.setProcessExecutor(null);
@@ -733,6 +736,29 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
             writeExecutor.submit(() -> {
                 ctx.appendOutputLine(event.getProcessOutput());
             });
+        }
+    }
+
+    private void onProcessInput(ProcessInputEvent event) {
+        ProcessDefinition processDefinition = event.getMainProcessDefinition();
+        LocalProcessContext ctx = contextMap.get(processDefinition.getProcessId());
+
+        if (ctx != null) {
+            if(awaitingInput.add(processDefinition.getProcessId())){
+                writeExecutor.submit(() -> {
+                    invokeLater(() -> ctx.appendOutput(event.getPrompt()));
+                    ctx.setOnUserInput(text -> {
+                        ProcessOrchestratorExecutor executor = ctx.getProcessExecutor();
+                        if(executor != null){
+                            try{
+                                executor.writeToStdin(processDefinition.getProcessId(), text);
+                            }finally {
+                                awaitingInput.remove(processDefinition.getProcessId());
+                            }
+                        }
+                    });
+                });
+            }
         }
     }
 

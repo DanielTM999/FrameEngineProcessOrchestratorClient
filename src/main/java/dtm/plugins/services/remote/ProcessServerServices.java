@@ -21,4 +21,6 @@ public interface ProcessServerServices {
 
     ProcessAttachListenerService newAttachProcess(ProcessDefinition processDefinition, boolean sendHistory);
 
+    void writeToStdin(String processId, String input);
+
 }

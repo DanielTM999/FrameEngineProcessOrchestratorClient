@@ -3,6 +3,7 @@ package dtm.plugins.context;
 import dtm.apps.core.extension.PluginContext;
 import dtm.manager.process.definition.ProcessDefinition;
 import dtm.manager.process.runtime.ProcessExecutor;
+import dtm.manager.process.runtime.ProcessOrchestratorExecutor;
 import dtm.plugins.views.components.pipeline.ProcessSidebarItem;
 import lombok.Getter;
 
@@ -15,7 +16,7 @@ public class LocalProcessContext extends BaseTerminalOutputContext{
     private final AtomicBoolean isRunningRef;
     private final AtomicBoolean isMonitoringRef;
     private final AtomicReference<ProcessDefinition> processDefinitionAtomicRef;
-    private final AtomicReference<ProcessExecutor> processExecutorAtomicRef;
+    private final AtomicReference<ProcessOrchestratorExecutor> processExecutorAtomicRef;
 
     public LocalProcessContext(
             PluginContext pluginContext,
@@ -30,14 +31,13 @@ public class LocalProcessContext extends BaseTerminalOutputContext{
         this.processExecutorAtomicRef = new AtomicReference<>(null);
     }
 
-    public ProcessExecutor getProcessExecutor() {
+    public ProcessOrchestratorExecutor getProcessExecutor() {
         return processExecutorAtomicRef.get();
     }
 
-    public void setProcessExecutor(ProcessExecutor processExecutor) {
+    public void setProcessExecutor(ProcessOrchestratorExecutor processExecutor) {
         processExecutorAtomicRef.set(processExecutor);
     }
-
 
     public String getProcessDefinitionId(){
         return (getProcessDefinition() != null) ? getProcessDefinition().getProcessId() : "";

@@ -84,6 +84,8 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
         return t;
     });
 
+
+    private final Set<String> awaitingInput = ConcurrentHashMap.newKeySet();
     private final Set<String> stoppedNotifiedIds = ConcurrentHashMap.newKeySet();
     private final Set<String> restartProcesses = ConcurrentHashMap.newKeySet();
     private final Map<String, ProcessAttachListenerService> processAttachMap = new ConcurrentHashMap<>();
@@ -277,6 +279,13 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
                     ctx.appendOutputLine(content.replace("\\u001B", "\u001B"));
                     break;
                 }
+                case "PROCESS-INPUT" -> {
+                    if(awaitingInput.add(ctx.getProcessDefinitionId())){
+                        ctx.appendOutputLine(content);
+                        ctx.setOnUserInput(text -> processInputText(ctx, text));
+                    }
+                    break;
+                }
                 case "ERROR-LOG" -> {
                     ctx.appendOutputLine("[ERROR] "+content);
                     break;
@@ -301,6 +310,16 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
         log.error("Erro no Attach", throwable);
     }
 
+    private void processInputText(RemoteProcessContext ctx, String input){
+        virtualExecutor.submit(() -> {
+            try{
+                getProcessServerServices().writeToStdin(ctx.getProcessDefinitionId(), input);
+            }finally {
+                awaitingInput.remove(ctx.getProcessDefinitionId());
+                ctx.setOnUserInput(null);
+            }
+        });
+    }
 
     private void loadProcessAsync(){
         loadProcessAsync(null);
@@ -709,19 +728,19 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
                 .show();
 
         if (option == 1) {
-            LoadingDialog loadingDialog = windowFactory.newWindow(LoadingDialog.class, false, new Object[]{
-                    pluginContext.getContextWindow(),
-                    "Finalizando Processo",
-                    "Finalizando Processo: "+ctx.getProcessName()
-            });
+//            LoadingDialog loadingDialog = windowFactory.newWindow(LoadingDialog.class, false, new Object[]{
+//                    pluginContext.getContextWindow(),
+//                    "Finalizando Processo",
+//                    "Finalizando Processo: "+ctx.getProcessName()
+//            });
             try{
                 getProcessServerServices().stop(ctx.getProcessDefinitionId());
                 ctx.setRunning(false);
                 ctx.setMonitoring(false);
             }finally {
-                loadingDialog.dispose();
+                //loadingDialog.dispose();
             }
-
+            //loadingDialog.dispose();
         }
     }
 
@@ -830,7 +849,7 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
 
     private void showLateralRightDetailsPanel(JComponent component) {
         mainFrameWindow.runOnUi(w -> {
-            mainFrameWindow.requireUtilityPanel(PanelPosition.RIGHT, component, 350, 100);
+            mainFrameWindow.requireUtilityPanel(PanelPosition.RIGHT, component, 550, 100);
         });
     }
 

@@ -230,6 +230,20 @@ public class ProcessServerServicesImpl extends BaseHttpRemoteService implements 
         return new SimpleProcessAttach(httpAction, processDefinition, this::getRemoteAuthentication, sendHistory);
     }
 
+    @Override
+    public void writeToStdin(String processId, String input) {
+        try {
+            RemoteAuthentication authentication = getRemoteAuthentication();
+            String url = getUrlFormated(authentication.getBaseUrl(), "/process/" + processId + "/stdin");
+            Map<String, String> headers = getHeaderAuthentication(authentication, false);
+            httpAction.post(url, input, headers);
+        } catch (HttpException e) {
+            throw new DisplayException("Erro ao se comunicar com o servidor remoto").title("Conexão Interrompida");
+        } catch (Exception e) {
+            throw new DisplayException(e.getMessage()).title("Erro ao enviar input");
+        }
+    }
+
 
     private RemoteAuthentication getRemoteAuthentication() {
         return context

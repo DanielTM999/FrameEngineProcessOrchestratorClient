@@ -1,14 +1,19 @@
 package dtm.plugins.services;
 
 import com.jediterm.terminal.TtyConnector;
+import lombok.Setter;
 
 import java.awt.*;
 import java.io.IOException;
-import java.io.PipedReader;
-import java.io.PipedWriter;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Consumer;
 
 public class OutputTtyConnector implements TtyConnector {
+
+    @Setter
+    private volatile Consumer<String> onUserInput;
+
+    private final StringBuilder inputBuffer = new StringBuilder();
     private final LinkedBlockingQueue<char[]> queue = new LinkedBlockingQueue<>();
     private volatile boolean connected = true;
     private char[] current = null;
@@ -17,6 +22,33 @@ public class OutputTtyConnector implements TtyConnector {
     public void feed(String text) {
         if (text == null || text.isEmpty() || !connected) return;
         queue.offer(text.toCharArray());
+    }
+
+    @Override
+    public void write(String s) throws IOException {
+        if (s == null || s.isEmpty() || onUserInput == null) return;
+        for (char c : s.toCharArray()) {
+            if (c == '\r' || c == '\n') {
+                feed("\r\n");
+                if (onUserInput != null && !inputBuffer.isEmpty()) {
+                    onUserInput.accept(inputBuffer.toString());
+                    inputBuffer.setLength(0);
+                }
+            } else if (c == 127 || c == '\b') {
+                if (!inputBuffer.isEmpty()) {
+                    inputBuffer.deleteCharAt(inputBuffer.length() - 1);
+                    feed("\b \b");
+                }
+            } else {
+                inputBuffer.append(c);
+                feed(String.valueOf(c));
+            }
+        }
+    }
+
+    @Override
+    public void write(byte[] bytes) throws IOException {
+        write(new String(bytes));
     }
 
     @Override
@@ -54,8 +86,6 @@ public class OutputTtyConnector implements TtyConnector {
     @Override public String  getName()                            { return "output"; }
     @Override public void    resize(Dimension ts, Dimension ps)   {}
     @Override public int     waitFor() throws InterruptedException { return 0; }
-    @Override public void    write(byte[] bytes) throws IOException {}
-    @Override public void    write(String s)    throws IOException {}
 
     @Override
     public void close() {
