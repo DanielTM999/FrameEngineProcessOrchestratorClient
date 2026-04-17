@@ -50,6 +50,11 @@ public class LogColorizer {
     private static boolean isBannerOrAsciiArt(String text) {
         String trimmed = text.trim();
         if (trimmed.isEmpty()) return true;
+
+        if (trimmed.matches(".*\\[(ERROR|ERRO|SEVERE|ERR|FATAL|CRITICAL|CRIT|FAIL|FAILED|WARN|WARNING|WRN|INFO|INF|NOTICE|DEBUG|TRACE)\\].*")) {
+            return false;
+        }
+
         int special = 0;
         int total = trimmed.length();
         for (int i = 0; i < total; i++) {
