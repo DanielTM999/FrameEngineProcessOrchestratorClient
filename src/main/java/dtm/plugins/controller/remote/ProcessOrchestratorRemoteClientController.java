@@ -602,6 +602,19 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
                     if (option == 0) stopMonitoring(ctx);
                 });
                 menu.add(btnMonitor);
+
+
+                JMenuItem btnOpenTerminal = new JMenuItem("Abrir terminal");
+                btnOpenTerminal.addActionListener(evt -> {
+                    mainFrameWindow.runOnUi((t) -> {
+                        ctx.clearLog();
+                        JPanel monitorPanel = ctx.getMonitorPanel();
+                        mainFrameWindow.requireUtilityPanel(PanelPosition.BOTTOM, monitorPanel, 350, 0);
+                    });
+                });
+                menu.add(btnOpenTerminal);
+
+
             }else{
                 JMenuItem btnMonitor = new JMenuItem("Monitorar (Abrir Terminal)");
                 btnMonitor.addActionListener(evt -> {
@@ -767,6 +780,12 @@ public class ProcessOrchestratorRemoteClientController extends AbstractViewContr
                 .option("Não", 1, new Color(220, 53, 69), Color.WHITE)
                 .show();
 
+
+        mainFrameWindow.runOnUi((t) -> {
+            ctx.clearLog();
+            JPanel monitorPanel = ctx.getMonitorPanel();
+            mainFrameWindow.requireUtilityPanel(PanelPosition.BOTTOM, monitorPanel, 350, 0);
+        });
 
         LoadingDialog loadingDialog = windowFactory.newWindow(LoadingDialog.class, false, new Object[]{
                 pluginContext.getContextWindow(),
