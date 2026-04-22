@@ -1,6 +1,6 @@
 {
   "pluginCollectionId": "ProcessOrchestratorClient",
-  "pluginPackage": ["dtm.plugins.boot", "dtm.plugins.services"],
+  "pluginPackages": ["dtm.plugins.boot", "dtm.plugins.services"],
   "pluginCollectionName": "Process Orchestrator Client",
   "pluginCollectionVersion": "1.0.0",
   "pluginCollectionDescription": "Cliente para o FrameEngine que permite conectar e interagir com o Process Orchestrator, possibilitando o gerenciamento de processos locais e remotos diretamente dentro da aplicação.",
