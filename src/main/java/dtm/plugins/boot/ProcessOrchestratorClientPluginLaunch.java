@@ -1,4 +1,4 @@
-package dtm.plugins;
+package dtm.plugins.boot;
 
 import dtm.apps.annotations.PluginReference;
 import dtm.apps.core.ApplicationProperties;
@@ -43,11 +43,6 @@ public class ProcessOrchestratorClientPluginLaunch extends WindowPluginAdapter {
     private final AtomicBoolean isSelfContext = new AtomicBoolean(true);
     private final ApplicationPropertiesManager applicationPropertiesManager;
     private final Map<Class<?>, String> windowsContextsSet = new ConcurrentHashMap<>();
-
-    @Override
-    public boolean execute(String s) {
-        return true;
-    }
 
     @Override
     public void onInit() {
