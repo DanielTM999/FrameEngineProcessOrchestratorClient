@@ -739,20 +739,23 @@ public class ProcessOrchestratorLocalController extends BindingAbstractViewContr
     }
 
     private void onProcessInput(ProcessInputEvent event) {
-        ProcessDefinition processDefinition = event.getMainProcessDefinition();
-        LocalProcessContext ctx = contextMap.get(processDefinition.getProcessId());
+        ProcessDefinition mainDefinition = event.getMainProcessDefinition();
+        String mainProcessId = mainDefinition.getProcessId();
+        String targetProcessId = event.getProcessExecutor().getDefinition().getProcessId();
+        LocalProcessContext ctx = contextMap.get(mainProcessId);
 
         if (ctx != null) {
-            if(awaitingInput.add(processDefinition.getProcessId())){
+            if(awaitingInput.add(mainProcessId)){
                 writeExecutor.submit(() -> {
                     invokeLater(() -> ctx.appendOutput(event.getPrompt()));
                     ctx.setOnUserInput(text -> {
                         ProcessOrchestratorExecutor executor = ctx.getProcessExecutor();
                         if(executor != null){
                             try{
-                                executor.writeToStdin(processDefinition.getProcessId(), text);
+                                executor.writeToStdin(targetProcessId, text);
                             }finally {
-                                awaitingInput.remove(processDefinition.getProcessId());
+                                awaitingInput.remove(mainProcessId);
+                                ctx.setOnUserInput(null);
                             }
                         }
                     });
